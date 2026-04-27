@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PixelPur — Photo Retouching Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --black: #0e0e0e;
+    --white: #f9f7f4;
+    --accent: #c8a97e;
+    --accent-dark: #9c7a52;
+    --gray-light: #f0ede8;
+    --gray-mid: #c0bbb3;
+    --gray-text: #6b6560;
+    --serif: 'DM Serif Display', serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--sans); background: var(--white); color: var(--black); overflow-x: hidden; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 8rem;
+    background: rgba(249,247,244,0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(200,169,126,0.15);
+  }
+  .nav-logo { font-family: var(--serif); font-size: 1.4rem; letter-spacing: 0.02em; color: var(--black); text-decoration: none; }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a { font-size: 0.85rem; font-weight: 400; color: var(--gray-text); text-decoration: none; letter-spacing: 0.05em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--black); }
+  .nav-cta {
+    background: var(--black); color: var(--white);
+    padding: 0.5rem 1.2rem; border-radius: 100px;
+    font-size: 0.8rem; font-weight: 500; text-decoration: none;
+    letter-spacing: 0.04em; transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--accent-dark); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh; display: flex; align-items: center;
+    padding: 8rem 8rem 4rem;
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 100%), url('Images/after/after1.png') center/cover no-repeat;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 100%);
+    pointer-events: none;
+  }
+  .hero-deco {
+    position: absolute; right: -100px; top: 50%; transform: translateY(-50%);
+    width: 600px; height: 600px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,169,126,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    display: none;
+  }
+  .hero-deco2 {
+    position: absolute; left: -200px; bottom: -100px;
+    width: 500px; height: 500px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,169,126,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    display: none;
+  }
+  .hero-content { position: relative; z-index: 2; max-width: 640px; color: var(--white); }
+  .hero-showcase {
+    position: absolute; right: -80px; top: 50%; transform: translateY(-50%);
+    z-index: 2; width: 600px; height: 700px;
+    border-radius: 24px; overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.2), 0 0 0 1px rgba(200,169,126,0.15);
+    display: none;
+  }
+  .hero-ba {
+    position: relative; width: 100%; height: 100%;
+  }
+  .hero-ba img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  }
+  .hero-ba .after { z-index: 2; }
+  .hero-ba .before { z-index: 1; }
+  .hero-ba-clip {
+    position: absolute; top: 0; bottom: 0; right: 0; left: 50%;
+    z-index: 3; overflow: hidden;
+  }
+  .hero-ba-clip img { width: 100%; height: 100%; }
+  .hero-ba-divider {
+    position: absolute; top: 0; bottom: 0; left: 50%; width: 3px;
+    background: var(--white); z-index: 4;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  }
+  .hero-ba-handle {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--white); border: 3px solid var(--accent);
+    z-index: 5; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+  }
+  .hero-ba-handle svg { width: 18px; height: 18px; stroke: var(--accent); stroke-width: 2.5; fill: none; }
+  .hero-ba-label {
+    position: absolute; bottom: 16px; font-size: 0.7rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 100px; z-index: 6; font-weight: 600;
+  }
+  .hero-ba-label.before { left: 16px; background: rgba(14,14,14,0.7); color: #fff; }
+  .hero-ba-label.after { right: 16px; background: var(--accent); color: var(--black); }
+  @keyframes heroSlide {
+    0%, 100% { left: 30%; }
+    50% { left: 70%; }
+  }
+  .hero-ba.animate .hero-ba-clip,
+  .hero-ba.animate .hero-ba-divider,
+  .hero-ba.animate .hero-ba-handle {
+    animation: heroSlide 6s ease-in-out infinite;
+  }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 1.5rem;
+    padding: 0.3rem 0.9rem; border: 1px solid rgba(200,169,126,0.6); border-radius: 100px;
+  }
+  .hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
+  h1 {
+    font-family: var(--serif); font-size: clamp(3rem, 7vw, 5.5rem);
+    line-height: 1.04; letter-spacing: -0.01em; color: var(--white);
+    margin-bottom: 1.5rem;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+  .hero-desc {
+    font-size: 1.05rem; line-height: 1.75; color: rgba(249,247,244,0.85);
+    max-width: 480px; margin-bottom: 2.5rem; font-weight: 300;
+  }
+  .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 4rem; }
+  .btn-primary {
+    background: var(--black); color: var(--white);
+    padding: 0.9rem 2rem; border-radius: 100px;
+    font-size: 0.9rem; font-weight: 500; text-decoration: none;
+    letter-spacing: 0.02em; transition: all 0.25s;
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--sans);
+  }
+  .btn-primary:hover { background: var(--accent-dark); transform: translateY(-2px); }
+  .btn-secondary {
+    background: transparent; color: var(--white);
+    padding: 0.9rem 2rem; border-radius: 100px;
+    font-size: 0.9rem; font-weight: 400; text-decoration: none;
+    letter-spacing: 0.02em; border: 1px solid rgba(249,247,244,0.4); transition: all 0.25s;
+    font-family: var(--sans);
+  }
+  .btn-secondary:hover { border-color: var(--white); background: rgba(249,247,244,0.1); }
+  .hero-stats {
+    display: flex; gap: 3rem;
+    padding-top: 2rem; border-top: 1px solid rgba(200,169,126,0.4);
+  }
+  .stat-num { font-family: var(--serif); font-size: 2.2rem; color: var(--white); line-height: 1; }
+  .stat-label { font-size: 0.75rem; color: rgba(249,247,244,0.7); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 4px; }
+
+  /* SECTION COMMON */
+  section { padding: 7rem 8rem; }
+  .section-tag {
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--accent-dark); margin-bottom: 0.75rem; font-weight: 500;
+  }
+  .section-title {
+    font-family: var(--serif); font-size: clamp(2.2rem, 4vw, 3.2rem);
+    line-height: 1.1; color: var(--black); margin-bottom: 1rem;
+  }
+  .section-title em { font-style: italic; color: var(--accent-dark); }
+  .section-desc { font-size: 1rem; color: var(--gray-text); line-height: 1.75; max-width: 480px; font-weight: 300; }
+
+  /* SERVICES */
+  #services { background: var(--black); }
+  #services .section-tag { color: var(--accent); }
+  #services .section-title { color: var(--white); }
+  #services .section-desc { color: rgba(249,247,244,0.5); }
+  .services-header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    flex-wrap: wrap; gap: 1.5rem; margin-bottom: 4rem;
+  }
+  .services-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: rgba(200,169,126,0.12);
+    border: 1px solid rgba(200,169,126,0.12);
+    border-radius: 20px; overflow: hidden;
+  }
+  .service-card {
+    background: var(--black); padding: 2.5rem 1.75rem;
+    transition: background 0.3s; cursor: default;
+  }
+  .service-card:hover { background: #181614; }
+  .service-icon {
+    width: 46px; height: 46px; border-radius: 12px;
+    background: rgba(200,169,126,0.1); border: 1px solid rgba(200,169,126,0.18);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.5rem; font-size: 1.2rem;
+  }
+  .service-name { font-family: var(--serif); font-size: 1.15rem; color: var(--white); margin-bottom: 0.5rem; }
+  .service-desc { font-size: 0.85rem; color: rgba(249,247,244,0.45); line-height: 1.65; font-weight: 300; }
+  .service-price { margin-top: 1.5rem; font-size: 0.78rem; color: var(--accent); letter-spacing: 0.05em; font-weight: 500; }
+
+  /* BEFORE / AFTER */
+  #work { background: var(--gray-light); padding: 10rem 8rem; }
+  .ba-header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    flex-wrap: wrap; gap: 1rem; margin-bottom: 3.5rem;
+  }
+  .ba-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+  .ba-card {
+    border-radius: 20px; overflow: hidden; background: var(--white);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .ba-card:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
+  .ba-slider-wrap {
+    position: relative; width: 100%; aspect-ratio: 4/3; overflow: hidden;
+    cursor: col-resize; user-select: none; -webkit-user-select: none;
+  }
+  .ba-before, .ba-after {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif); font-size: 0.9rem; font-style: italic;
+    letter-spacing: 0.04em; color: rgba(14,14,14,0.4);
+    object-fit: cover;
+  }
+  .ba-before { background: linear-gradient(135deg, #ccc9c3 0%, #b5b0a8 100%); }
+  .ba-clip {
+    position: absolute; top: 0; bottom: 0; right: 0;
+    overflow: hidden; transition: none;
+  }
+  .ba-after-inner {
+    position: absolute; top: 0; bottom: 0; right: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif); font-size: 0.9rem; font-style: italic;
+    letter-spacing: 0.04em; color: rgba(14,14,14,0.4);
+  }
+  .ba-divider {
+    position: absolute; top: 0; bottom: 0; width: 2px;
+    background: var(--white); z-index: 3;
+  }
+  .ba-handle {
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--white); border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 4; box-shadow: 0 2px 14px rgba(0,0,0,0.18);
+    font-size: 0.6rem; color: var(--accent); font-weight: 700; letter-spacing: -1px;
+    pointer-events: none;
+  }
+  .ba-pill {
+    position: absolute; bottom: 10px; font-size: 0.65rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 100px; z-index: 5; font-weight: 500;
+  }
+  .ba-pill.before { left: 10px; background: rgba(14,14,14,0.55); color: #fff; }
+  .ba-pill.after  { right: 10px; background: rgba(200,169,126,0.92); color: var(--black); }
+  .ba-info { padding: 1.5rem 1.8rem; }
+  .ba-title { font-family: var(--serif); font-size: 1.3rem; color: var(--black); }
+  .ba-subtitle { font-size: 0.8rem; color: var(--gray-text); margin-top: 4px; }
+
+  /* PROCESS */
+  #process { background: var(--gray-light); }
+  .process-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2.5rem; margin-top: 4rem; }
+  .step-num { font-family: var(--serif); font-size: 4rem; color: rgba(200,169,126,0.22); line-height: 1; margin-bottom: 1rem; }
+  .step-title { font-family: var(--serif); font-size: 1.2rem; color: var(--black); margin-bottom: 0.5rem; }
+  .step-desc { font-size: 0.85rem; color: var(--gray-text); line-height: 1.65; font-weight: 300; }
+
+  /* CTA */
+  #contact {
+    background: var(--black); text-align: center;
+    padding: 8rem 8rem;
+  }
+  #contact .section-tag { color: var(--accent); margin-bottom: 1rem; }
+  #contact .section-title { color: var(--white); margin-bottom: 1rem; }
+  #contact .section-desc { color: rgba(249,247,244,0.45); margin: 0 auto 3rem; }
+  /* FOOTER */
+  footer {
+    background: var(--black);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 2rem 8rem;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+  }
+  .footer-logo { font-family: var(--serif); font-size: 1rem; color: rgba(249,247,244,0.5); }
+  .footer-logo span { color: var(--accent); }
+  .footer-note { font-size: 0.75rem; color: rgba(249,247,244,0.25); }
+
+  /* FADE-IN ON SCROLL */
+  .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.65s ease, transform 0.65s ease; }
+  .fade-in.visible { opacity: 1; transform: none; }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    section { padding: 5rem 1.5rem; }
+    .hero { padding: 7rem 1.5rem 4rem; }
+    .hero-stats { gap: 2rem; }
+    .services-header { flex-direction: column; }
+    .ba-header { flex-direction: column; }
+    .ba-slider-wrap { aspect-ratio: 1/1; }
+    #work { padding: 10rem 1.5rem; }
+    footer { padding: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Pixel<span>Pur</span></a>
+  <ul class="nav-links">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#work">Work</a></li>
+    
+    <li><a href="#process">Process</a></li>
+  </ul>
+  <a href="https://wa.me/237621793565" class="nav-cta">Get a quote</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-deco"></div>
+  <div class="hero-deco2"></div>
+  <div class="hero-showcase">
+    <div class="hero-ba animate" data-hero-ba>
+      <img class="before" src="Images/before/before1.jpeg" alt="Before">
+      <div class="hero-ba-clip">
+        <img src="Images/after/after1.png" alt="After">
+      </div>
+      <div class="hero-ba-divider"></div>
+      <div class="hero-ba-handle">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <span class="hero-ba-label before">Before</span>
+      <span class="hero-ba-label after">After</span>
+    </div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-tag">Professional Photo Retouching · Douala</div>
+    <h1>Your images,<br><em>perfected.</em></h1>
+    <p class="hero-desc">Background removal, colour grading, skin retouching, scaling — delivered fast, starting from just 500 FCFA per image.</p>
+    <div class="hero-btns">
+      <a href="#contact" class="btn-primary">Get a quote →</a>
+      <a href="#work" class="btn-secondary">View my work</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">500+</div>
+        <div class="stat-label">Images edited</div>
+      </div>
+      <div>
+        <div class="stat-num">24h</div>
+        <div class="stat-label">Turnaround</div>
+      </div>
+      <div>
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Satisfaction</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="services-header fade-in">
+    <div>
+      <div class="section-tag">What I do</div>
+      <h2 class="section-title">Studio-grade<br><em>editing services</em></h2>
+    </div>
+    <p class="section-desc">From simple cleanups to full professional retouches — every pixel handled with care.</p>
+  </div>
+  <div class="services-grid fade-in">
+    <div class="service-card">
+      <div class="service-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      </div>
+      <div class="service-name">Background Removal</div>
+      <div class="service-desc">Pixel-perfect cutouts for products, portraits, and e-commerce images.</div>
+      <div class="service-price">From 500 FCFA / image</div>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      </div>
+      <div class="service-name">Background Replacement</div>
+      <div class="service-desc">Add a new scene, solid colour, studio backdrop, or custom environment.</div>
+      <div class="service-price">From 800 FCFA / image</div>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      </div>
+      <div class="service-name">Image Scaling</div>
+      <div class="service-desc">Resize and upscale photos for print or digital without losing quality.</div>
+      <div class="service-price">From 500 FCFA / image</div>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="service-name">Skin Retouching</div>
+      <div class="service-desc">Natural-looking smoothing, blemish removal, and tone correction.</div>
+      <div class="service-price">From 1,000 FCFA / image</div>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" y1="8" x2="12" y2="8"/><line x1="3.95" y1="6.06" x2="8.54" y2="14"/><line x1="10.88" y1="21.94" x2="15.46" y2="14"/></svg>
+      </div>
+      <div class="service-name">Colour Grading</div>
+      <div class="service-desc">Professional colour correction and mood grading to make your images pop.</div>
+      <div class="service-price">From 700 FCFA / image</div>
+    </div>
+  </div>
+</section>
+
+<!-- BEFORE / AFTER -->
+<section id="work">
+  <div class="ba-header fade-in">
+    <div>
+      <div class="section-tag">My work</div>
+      <h2 class="section-title">Before <em>&amp; After</em></h2>
+    </div>
+    <p class="section-desc" style="max-width:300px;">Drag the slider on each image to see the transformation.</p>
+  </div>
+  <div class="ba-grid">
+
+    <div class="ba-card fade-in">
+      <div class="ba-slider-wrap" data-ba>
+        <img class="ba-before" src="Images/before/before1.jpeg" alt="Before" style="object-fit:cover;width:100%;height:100%;position:absolute;inset:0;">
+        <div class="ba-clip" style="left:50%">
+          <img class="ba-after-inner" src="Images/after/after1.png" alt="After" style="object-fit:cover;width:100vw;height:100%;position:absolute;right:0;left:auto;">
+        </div>
+        <div class="ba-divider" style="left:50%"></div>
+        <div class="ba-handle" style="left:50%">◁▷</div>
+        <span class="ba-pill before">Before</span>
+        <span class="ba-pill after">After</span>
+      </div>
+      <div class="ba-info">
+        <div class="ba-title">Portrait Retouch</div>
+        <div class="ba-subtitle">Skin smoothing · Blemish removal · Colour grade</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+
+<!-- PROCESS -->
+<section id="process">
+  <div class="fade-in">
+    <div class="section-tag">How it works</div>
+    <h2 class="section-title">Four steps to<br><em>perfect images</em></h2>
+  </div>
+  <div class="process-steps">
+    <div class="fade-in">
+      <div class="step-num">01</div>
+      <div class="step-title">Send your images</div>
+      <div class="step-desc">Share your photos via WhatsApp or email along with your instructions and requirements.</div>
+    </div>
+    <div class="fade-in">
+      <div class="step-num">02</div>
+      <div class="step-title">We agree on price</div>
+      <div class="step-desc">You get a clear, upfront quote based on the service type and number of images.</div>
+    </div>
+    <div class="fade-in">
+      <div class="step-num">03</div>
+      <div class="step-title">I get to work</div>
+      <div class="step-desc">Every image is edited with careful attention to detail — nothing rushed, nothing generic.</div>
+    </div>
+    <div class="fade-in">
+      <div class="step-num">04</div>
+      <div class="step-title">Receive & review</div>
+      <div class="step-desc">Get your retouched images back within the agreed time. Revisions included if needed.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="contact">
+  <div class="section-tag">Ready to start?</div>
+  <h2 class="section-title fade-in">Let's work<br><em>together.</em></h2>
+  <p class="section-desc fade-in">Send me your images directly on WhatsApp. I usually reply within the hour.</p>
+  <a href="https://wa.me/237621793565" class="btn-primary fade-in" style="display:inline-flex;gap:8px;background:var(--accent);color:var(--black);">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    Chat on WhatsApp
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Pixel<span>Pur</span> Studio</div>
+  <div class="footer-note">© 2026 · Based in Douala, Cameroon</div>
+</footer>
+
+<script>
+  /* ---- Hero Before/After ---- */
+  const heroBa = document.querySelector('[data-hero-ba]');
+  if (heroBa) {
+    const heroClip = heroBa.querySelector('.hero-ba-clip');
+    const heroDivider = heroBa.querySelector('.hero-ba-divider');
+    const heroHandle = heroBa.querySelector('.hero-ba-handle');
+    let heroActive = false;
+    function heroSetPos(clientX) {
+      const rect = heroBa.getBoundingClientRect();
+      const pct = Math.max(5, Math.min(95, ((clientX - rect.left) / rect.width) * 100));
+      heroClip.style.left = pct + '%';
+      heroDivider.style.left = pct + '%';
+      heroHandle.style.left = pct + '%';
+    }
+    heroBa.addEventListener('mousedown', e => { heroActive = true; heroSetPos(e.clientX); });
+    window.addEventListener('mousemove', e => { if (heroActive) heroSetPos(e.clientX); });
+    window.addEventListener('mouseup', () => heroActive = false);
+    heroBa.addEventListener('touchstart', e => { heroActive = true; heroSetPos(e.touches[0].clientX); }, { passive: true });
+    window.addEventListener('touchmove', e => { if (heroActive) heroSetPos(e.touches[0].clientX); }, { passive: true });
+    window.addEventListener('touchend', () => heroActive = false);
+  }
+
+  /* ---- Before/After sliders ---- */
+  document.querySelectorAll('[data-ba]').forEach(wrap => {
+    const divider = wrap.querySelector('.ba-divider');
+    const handle  = wrap.querySelector('.ba-handle');
+    const clip    = wrap.querySelector('.ba-clip');
+    let active = false;
+
+    function setPos(clientX) {
+      const rect = wrap.getBoundingClientRect();
+      const pct  = Math.max(3, Math.min(97, ((clientX - rect.left) / rect.width) * 100));
+      const px   = pct + '%';
+      divider.style.left = px;
+      handle.style.left  = px;
+      clip.style.left    = px;
+    }
+
+    wrap.addEventListener('mousedown',  e => { active = true; setPos(e.clientX); });
+    window.addEventListener('mousemove', e => { if (active) setPos(e.clientX); });
+    window.addEventListener('mouseup',   () => active = false);
+    wrap.addEventListener('touchstart',  e => { active = true; setPos(e.touches[0].clientX); }, { passive: true });
+    window.addEventListener('touchmove', e => { if (active) setPos(e.touches[0].clientX); }, { passive: true });
+    window.addEventListener('touchend',  () => active = false);
+  });
+
+  /* ---- Scroll fade-in ---- */
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+
+  </script>
+</body>
+</html>
